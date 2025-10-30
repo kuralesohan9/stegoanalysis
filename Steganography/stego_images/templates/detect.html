@@ -1,0 +1,221 @@
+{% extends "layout.html" %} {% block title %} Detection - Steganography Suite {%
+endblock %} {% block content %}
+<style>
+  .form-container {
+    max-width: 700px;
+    margin: auto;
+  }
+  form > div {
+    margin-bottom: 1.5rem;
+  }
+  label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+  }
+  input[type="file"] {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-size: 1rem;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input[type="file"]:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3);
+  }
+  #submit-btn {
+    width: 100%;
+    padding: 0.85rem;
+    border: none;
+    border-radius: 6px;
+    background-image: linear-gradient(45deg, #3672f3 0%, #a458ff 100%);
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  #submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  }
+  #submit-btn:disabled {
+    background-image: none;
+    background-color: var(--text-secondary);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  #status-message {
+    text-align: center;
+    padding: 1rem;
+    margin-top: 1.5rem;
+    border-radius: 6px;
+    display: none;
+  }
+  #status-message.error {
+    background-color: rgba(211, 86, 96, 0.1);
+    color: #f87171;
+    border: 1px solid rgba(211, 86, 96, 0.3);
+    display: block;
+  }
+  #result-section {
+    margin-top: 2rem;
+    text-align: center;
+    display: none;
+    padding: 2rem;
+    border-radius: 8px;
+  }
+  #result-section.stego {
+    background-color: rgba(211, 86, 96, 0.05);
+    border: 1px solid rgba(211, 86, 96, 0.2);
+  }
+  #result-section.cover {
+    background-color: rgba(86, 211, 100, 0.05);
+    border: 1px solid rgba(86, 211, 100, 0.2);
+  }
+  #result-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  .stego #result-title {
+    color: #f87171;
+  }
+  .cover #result-title {
+    color: var(--accent-green);
+  }
+  #result-confidence {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+  }
+  #preview-container {
+    margin-top: 1.5rem;
+  }
+  #image-preview {
+    max-width: 100%;
+    max-height: 250px;
+    object-fit: contain;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+  }
+  .spinner {
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-top: 3px solid #fff;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+  }
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+</style>
+
+<div class="container form-container">
+  <h1 style="text-align: center">Steganalysis & Detection</h1>
+  <form id="detect-form">
+    <div>
+      <label for="image">Upload Image to Analyze:</label>
+      <input
+        type="file"
+        id="image"
+        name="image"
+        accept="image/png, image/jpeg, image/bmp"
+        required
+      />
+    </div>
+    <button type="submit" id="submit-btn">
+      <span id="btn-text">Analyze Image</span>
+    </button>
+  </form>
+  <div id="status-message"></div>
+  <div id="result-section">
+    <h2 id="result-title"></h2>
+    <p id="result-confidence"></p>
+    <div id="preview-container">
+      <img id="image-preview" src="" alt="Uploaded Image Preview" />
+    </div>
+  </div>
+</div>
+
+<script>
+  const detectForm = document.getElementById("detect-form");
+  const imageInput = document.getElementById("image");
+  const submitBtn = document.getElementById("submit-btn");
+  const btnText = document.getElementById("btn-text");
+  const statusMessage = document.getElementById("status-message");
+  const resultSection = document.getElementById("result-section");
+  const resultTitle = document.getElementById("result-title");
+  const resultConfidence = document.getElementById("result-confidence");
+  const imagePreview = document.getElementById("image-preview");
+
+  imageInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      imagePreview.src = URL.createObjectURL(file);
+    }
+  });
+
+  detectForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    statusMessage.style.display = "none";
+    resultSection.style.display = "none";
+
+    submitBtn.disabled = true;
+    btnText.textContent = "Analyzing...";
+    const spinner = document.createElement("div");
+    spinner.className = "spinner";
+    submitBtn.prepend(spinner);
+
+    const formData = new FormData(detectForm);
+
+    try {
+      const response = await fetch("/perform_detect", {
+        method: "POST",
+        body: formData,
+      });
+      const result = await response.json();
+      if (response.ok && result.success) {
+        resultTitle.textContent = result.prediction;
+        resultConfidence.textContent = `Model Confidence: ${result.confidence}`;
+
+        if (result.prediction === "Stego Image") {
+          resultSection.className = "stego";
+        } else {
+          resultSection.className = "cover";
+        }
+
+        resultSection.style.display = "block";
+      } else {
+        throw new Error(result.error || "An unknown error occurred.");
+      }
+    } catch (error) {
+      statusMessage.textContent = `Error: ${error.message}`;
+      statusMessage.style.display = "block";
+    } finally {
+      submitBtn.disabled = false;
+      btnText.textContent = "Analyze Image";
+      if (submitBtn.firstChild.classList.contains("spinner")) {
+        submitBtn.removeChild(submitBtn.firstChild);
+      }
+    }
+  });
+</script>
+{% endblock %}

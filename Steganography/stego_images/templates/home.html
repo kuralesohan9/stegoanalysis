@@ -1,0 +1,361 @@
+{% extends "layout.html" %} {% block title %}Home - Advanced Steganography
+Toolkit{% endblock %} {% block content %}
+<style>
+  .hero-section {
+    text-align: center;
+    padding: 4rem 2rem;
+    /* Updated to use a local background image */
+    background: linear-gradient(
+        135deg,
+        rgba(44, 47, 56, 0.8),
+        rgba(26, 27, 31, 0.9)
+      ),
+      url("{{ url_for('static', filename='images/hero-bg.jpg') }}");
+    background-size: cover;
+    background-position: center;
+    border-radius: 12px;
+    margin-bottom: 3rem;
+  }
+  .hero-section h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #fff;
+  }
+  .hero-section p {
+    font-size: 1.2rem;
+    max-width: 700px;
+    margin: 0 auto;
+    color: #b0b8c4;
+  }
+  .section-title {
+    text-align: center;
+    font-size: 2.2rem;
+    font-weight: 600;
+    margin-bottom: 2.5rem;
+    color: #e0e0e0;
+  }
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-bottom: 4rem;
+  }
+  .feature-card {
+    background-color: #2c2f38;
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid #444;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-decoration: none;
+    color: #b0b8c4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .feature-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+    border-color: #7c3aed;
+  }
+  .feature-card .icon {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 1rem;
+    color: #a855f7;
+  }
+  .feature-card h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #fff;
+  }
+  .news-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+  .news-card {
+    background-color: #2c2f38;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #444;
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  .news-card:hover {
+    transform: translateY(-5px);
+  }
+  .news-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+  }
+  .news-card .card-content {
+    padding: 1.5rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .news-card h4 {
+    font-size: 1.2rem;
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    color: #fff;
+  }
+  .news-card p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    flex-grow: 1;
+  }
+  .news-card .read-more {
+    color: #a855f7;
+    text-decoration: none;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: auto;
+  }
+  /* Modal Styles */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 1000;
+  }
+  .modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+  }
+  .modal-content {
+    background: #2c2f38;
+    padding: 2rem;
+    border-radius: 12px;
+    max-width: 800px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+  }
+  .modal-overlay.active .modal-content {
+    transform: scale(1);
+  }
+  .modal-close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 2rem;
+    color: #fff;
+    cursor: pointer;
+    border: none;
+    background: none;
+  }
+  .modal-content img {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+  }
+  .modal-content h2 {
+    margin-top: 0;
+    color: #fff;
+  }
+  .modal-content p {
+    color: #b0b8c4;
+    line-height: 1.7;
+  }
+</style>
+
+<div class="hero-section">
+  <h1>Advanced Steganography Toolkit</h1>
+  <p>
+    Securely conceal your data within images using state-of-the-art algorithms.
+    Our platform provides robust tools for embedding secret messages, detecting
+    hidden data with an AI-powered model, and extracting concealed information.
+  </p>
+</div>
+
+<h2 class="section-title">Core Functions</h2>
+<div class="features-grid">
+  <a href="{{ url_for('embed_page') }}" class="feature-card">
+    <svg
+      class="icon"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path
+        d="M19 16.5V7.5C19 6.12 17.88 5 16.5 5H7.5C6.12 5 5 6.12 5 7.5V16.5C5 17.88 6.12 19 7.5 19H16.5C17.88 19 19 17.88 19 16.5ZM16.5 7C17.33 7 18 7.67 18 8.5V15.5C18 16.33 17.33 17 16.5 17H7.5C6.67 17 6 16.33 6 15.5V8.5C6 7.67 6.67 7 7.5 7H16.5ZM11.25 14.5L9.5 12.31L7 15.5H17L13.5 11L11.25 14.5Z"
+      />
+    </svg>
+    <h3>Embed Message</h3>
+    <p>
+      Choose an algorithm (AES+LSB, Hugo, Wow) to hide your secret text inside a
+      cover image. Generate a new stego image and a visual map of the changes.
+    </p>
+  </a>
+  <a href="{{ url_for('detect_page') }}" class="feature-card">
+    <svg
+      class="icon"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path
+        d="M15.5 14H14.71L14.43 13.73C15.41 12.59 16 11.11 16 9.5C16 5.91 13.09 3 9.5 3S3 5.91 3 9.5S5.91 16 9.5 16C11.11 16 12.59 15.41 13.73 14.43L14 14.71V15.5L19 20.5L20.5 19L15.5 14ZM9.5 14C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5S14 7.01 14 9.5S11.99 14 9.5 14Z"
+      />
+    </svg>
+    <h3>Detect Hidden Data</h3>
+    <p>
+      Upload an image and leverage our trained SRNet model to analyze and
+      predict whether it contains hidden data. Get a confidence score for the
+      prediction.
+    </p>
+  </a>
+  <a href="{{ url_for('extract_page') }}" class="feature-card">
+    <svg
+      class="icon"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path
+        d="M9.52 2.52C9.13 2.13 8.5 1.93 7.87 1.93H6.5C5.12 1.93 4 3.05 4 4.43V5.93C4 6.56 4.2 7.19 4.59 7.58L10.18 13.17C10.55 13.54 11.16 13.75 11.79 13.75H13.17C14.55 13.75 15.67 12.63 15.67 11.25V9.75C15.67 9.12 15.47 8.5 15.08 8.11L9.52 2.52ZM18.5 10.94V4.43C18.5 3.05 17.38 1.93 16 1.93H14.5C13.87 1.93 13.24 2.13 12.85 2.52L10.5 4.87L14.63 9L18.5 10.94Z M4.59 16.42C4.2 16.81 4 17.44 4 18.07V19.57C4 20.95 5.12 22.07 6.5 22.07H7.87C8.5 22.07 9.13 21.87 9.52 21.48L15.08 15.92C15.47 15.53 15.67 14.9 15.67 14.27V12.86L10.18 10.83L4.59 16.42Z"
+      />
+    </svg>
+    <h3>Extract Message</h3>
+    <p>
+      Extract a hidden message from a stego image. This feature requires the
+      correct algorithm and key to successfully retrieve the concealed data.
+    </p>
+  </a>
+</div>
+
+<h2 class="section-title">Latest in Steganography</h2>
+<div class="news-grid">
+  <div class="news-card">
+    <!-- Updated image path -->
+    <img
+      src="{{ url_for('static', filename='images/article-ai.jpg') }}"
+      alt="AI brain graphic"
+    />
+    <div class="card-content">
+      <h4>The Rise of AI in Steganalysis</h4>
+      <p>
+        Modern steganalysis heavily relies on artificial intelligence,
+        particularly deep learning models like Convolutional Neural Networks
+        (CNNs)...
+      </p>
+      <!-- Updated data-img path -->
+      <span
+        class="read-more"
+        data-img="{{ url_for('static', filename='images/article-ai.jpg') }}"
+        data-title="The Rise of AI in Steganalysis"
+        data-content="Modern steganalysis heavily relies on artificial intelligence, particularly deep learning models like Convolutional Neural Networks (CNNs). These models, including the SRNet architecture used in our toolkit, are trained on vast datasets of cover and stego images. They learn to automatically identify the subtle, almost imperceptible statistical artifacts and noise patterns that data embedding leaves behind. Unlike traditional methods that look for specific statistical signatures, AI can find complex, high-dimensional correlations, making it exceptionally effective against even the most advanced adaptive steganography techniques."
+        >Read More &rarr;</span
+      >
+    </div>
+  </div>
+  <div class="news-card">
+    <!-- Updated image path -->
+    <img
+      src="{{ url_for('static', filename='images/article-jpeg.jpg') }}"
+      alt="Image pixels graphic"
+    />
+    <div class="card-content">
+      <h4>Resisting JPEG Compression Attacks</h4>
+      <p>
+        One of the greatest challenges for steganography is JPEG compression.
+        This 'lossy' format discards data to reduce file size, which can corrupt
+        or destroy a hidden message...
+      </p>
+      <!-- Updated data-img path -->
+      <span
+        class="read-more"
+        data-img="{{ url_for('static', filename='images/article-jpeg.jpg') }}"
+        data-title="Resisting JPEG Compression Attacks"
+        data-content="One of the greatest challenges for steganography is JPEG compression. This 'lossy' format discards data to reduce file size, which can corrupt or destroy a hidden message. To counter this, advanced algorithms no longer embed data in the spatial (pixel) domain. Instead, they operate in the frequency domain by modifying the Discrete Cosine Transform (DCT) coefficients that JPEG uses. By carefully selecting and subtly altering coefficients that are less likely to be quantized (discarded) during compression, these methods can create stego images that are remarkably resilient to degradation, ensuring the hidden message survives."
+        >Read More &rarr;</span
+      >
+    </div>
+  </div>
+  <div class="news-card">
+    <!-- Updated image path -->
+    <img
+      src="{{ url_for('static', filename='images/article-iot.jpg') }}"
+      alt="Network nodes graphic"
+    />
+    <div class="card-content">
+      <h4>Steganography in IoT & Botnets</h4>
+      <p>
+        The Internet of Things (IoT) presents a new frontier for steganography,
+        both for security and malicious purposes. It's actively being used by
+        botnets for covert communication...
+      </p>
+      <!-- Updated data-img path -->
+      <span
+        class="read-more"
+        data-img="{{ url_for('static', filename='images/article-iot.jpg') }}"
+        data-title="Steganography in IoT & Botnets"
+        data-content="The Internet of Things (IoT) presents a new frontier for steganography. For malicious actors, it's a powerful tool. Botnet operators can use steganography to issue commands to a network of infected devices (like smart cameras or routers) without raising suspicion. An instruction to launch a DDoS attack could be hidden within a seemingly innocuous image posted to a public social media feed that the bots are programmed to monitor. This makes the command-and-control (C2) channel incredibly difficult for network security tools to detect, as there are no suspicious domains or IP addresses to block."
+        >Read More &rarr;</span
+      >
+    </div>
+  </div>
+</div>
+
+<!-- Modal Structure -->
+<div id="article-modal" class="modal-overlay">
+  <div class="modal-content">
+    <button id="modal-close-btn" class="modal-close">&times;</button>
+    <img id="modal-image" src="" alt="Article Image" />
+    <h2 id="modal-title"></h2>
+    <p id="modal-text"></p>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const modal = document.getElementById("article-modal");
+    const closeBtn = document.getElementById("modal-close-btn");
+    const modalImage = document.getElementById("modal-image");
+    const modalTitle = document.getElementById("modal-title");
+    const modalText = document.getElementById("modal-text");
+
+    document.querySelectorAll(".read-more").forEach((button) => {
+      button.addEventListener("click", () => {
+        modalImage.src = button.dataset.img;
+        modalTitle.textContent = button.dataset.title;
+        modalText.textContent = button.dataset.content;
+        modal.classList.add("active");
+      });
+    });
+
+    const closeModal = () => {
+      modal.classList.remove("active");
+    };
+
+    closeBtn.addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        closeModal();
+      }
+    });
+  });
+</script>
+
+{% endblock %}

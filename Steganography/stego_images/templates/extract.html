@@ -1,0 +1,33 @@
+{% extends "layout.html" %} {% block title %} Extraction - Steganography Suite
+{% endblock %} {% block content %}
+<style>
+  .placeholder-content {
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+  .placeholder-content .icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    background: -webkit-linear-gradient(45deg, var(--accent-blue), #c77dff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .placeholder-content p {
+    max-width: 500px;
+    margin: 1rem auto;
+  }
+</style>
+<div class="container">
+  <div class="placeholder-content">
+    <div class="icon">⚗️</div>
+    <h1>Message Extraction</h1>
+    <p style="font-size: 1.2rem; color: var(--text-secondary)">
+      Feature Coming Soon
+    </p>
+    <p>
+      This module will allow you to upload a steganographic image and provide an
+      encryption key to retrieve the hidden secret message.
+    </p>
+  </div>
+</div>
+{% endblock %}

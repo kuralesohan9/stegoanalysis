@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Steganography Suite{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary-glow: rgba(13, 110, 253, 0.5);
+        --secondary-glow: rgba(220, 53, 69, 0.5);
+        --bg-color: #0d1117;
+        --widget-bg: #161b22;
+        --text-color: #c9d1d9;
+        --text-secondary: #8b949e;
+        --border-color: #30363d;
+        --accent-blue: #58a6ff;
+        --accent-green: #56d364;
+        --font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Roboto, "Helvetica Neue", Arial, sans-serif;
+      }
+
+      body {
+        font-family: var(--font-family);
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        background-image: radial-gradient(
+            at 20% 20%,
+            hsla(212, 96%, 61%, 0.1) 0px,
+            transparent 50%
+          ),
+          radial-gradient(
+            at 80% 20%,
+            hsla(284, 89%, 61%, 0.1) 0px,
+            transparent 50%
+          ),
+          radial-gradient(
+            at 20% 80%,
+            hsla(324, 89%, 61%, 0.1) 0px,
+            transparent 50%
+          ),
+          radial-gradient(
+            at 80% 80%,
+            hsla(180, 89%, 61%, 0.1) 0px,
+            transparent 50%
+          );
+      }
+
+      .header {
+        background-color: rgba(22, 27, 34, 0.8);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border-color);
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .header .logo {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-color);
+        text-decoration: none;
+        transition: color 0.3s;
+      }
+      .header .logo:hover {
+        color: var(--accent-blue);
+      }
+
+      .nav {
+        display: flex;
+        gap: 1rem;
+      }
+      .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        color: var(--text-secondary);
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        transition: color 0.3s, background-color 0.3s;
+      }
+      .nav-link svg {
+        width: 18px;
+        height: 18px;
+      }
+      .nav-link:hover {
+        color: var(--text-color);
+        background-color: rgba(139, 148, 158, 0.1);
+      }
+      .nav-link.active {
+        color: var(--accent-blue);
+        background-color: rgba(88, 166, 255, 0.1);
+      }
+
+      .main-content {
+        flex: 1;
+        padding: 2rem;
+        max-width: 1000px;
+        width: 100%;
+        margin: 2rem auto;
+        box-sizing: border-box;
+      }
+
+      .footer {
+        border-top: 1px solid var(--border-color);
+        text-align: center;
+        padding: 2rem;
+        margin-top: auto;
+        color: var(--text-secondary);
+      }
+
+      .container {
+        background: var(--widget-bg);
+        padding: 2rem;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+      }
+
+      h1,
+      h2,
+      h3 {
+        color: var(--text-color);
+        font-weight: 600;
+      }
+      p {
+        line-height: 1.7;
+        color: var(--text-secondary);
+      }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <a href="{{ url_for('home') }}" class="logo">StegoSuite</a>
+      <nav class="nav">
+        <a href="{{ url_for('home') }}" class="nav-link">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+          </svg>
+          Home
+        </a>
+        <a href="{{ url_for('embed_page') }}" class="nav-link">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+          </svg>
+          Embedding
+        </a>
+        <a href="{{ url_for('detect_page') }}" class="nav-link">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path
+              d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+            />
+          </svg>
+          Detection
+        </a>
+        <a href="{{ url_for('extract_page') }}" class="nav-link">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path
+              d="m20.54 5.23-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM6.24 5h11.52l.83 1H5.42l.82-1zM5 19V8h14v11H5z"
+            />
+            <path d="M11 10h2v5h-2z" />
+          </svg>
+          Extraction
+        </a>
+      </nav>
+    </header>
+
+    <main class="main-content">{% block content %}{% endblock %}</main>
+
+    <footer class="footer">
+      <p>&copy; 2025 Steganography Suite. All Rights Reserved.</p>
+    </footer>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const navLinks = document.querySelectorAll(".nav-link");
+        const currentPath = window.location.pathname;
+        navLinks.forEach((link) => {
+          if (link.getAttribute("href") === currentPath) {
+            link.classList.add("active");
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
