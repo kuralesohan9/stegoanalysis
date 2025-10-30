@@ -243,6 +243,28 @@ Toolkit{% endblock %} {% block content %}
       correct algorithm and key to successfully retrieve the concealed data.
     </p>
   </a>
+  <!-- NEW: Image-in-Image Steganography Card -->
+  <a href="{{ url_for('image_stego_page') }}" class="feature-card">
+    <svg
+      class="icon"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path
+        d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
+      />
+      <path
+        d="M15 9c0 1.1.9 2 2 2s2-.9 2-2-.9-2-2-2-2 .9-2 2z"
+        opacity="0.5"
+      />
+    </svg>
+    <h3>Image-in-Image</h3>
+    <p>
+      Hide entire images within other images using LSB steganography. Perfect
+      for concealing secret photos, logos, or any visual data inside a cover image.
+    </p>
+  </a>
 </div>
 
 <h2 class="section-title">Latest in Steganography</h2>
