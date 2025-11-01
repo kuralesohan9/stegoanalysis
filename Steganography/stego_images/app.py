@@ -6,10 +6,13 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torchvision import transforms
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_file
 from werkzeug.utils import secure_filename
 from Crypto.Random import get_random_bytes
 import cv2  # Import OpenCV
+import io
+import base64
+import math
 
 # Import your steganography classes
 from AES_LSB import UniversalSteganography as LsbStego
@@ -77,6 +80,83 @@ class SRNet(nn.Module):
         return x
 
 
+# ===============================================
+# 2. Image-in-Image Steganography Functions
+# ===============================================
+def write_image_data(img, data, filename):
+    """
+    Embeds image data into a cover image using LSB steganography.
+    Format: [filename(12 bytes)][filesize(4 bytes)][image data]
+    """
+    byte_array = bytearray()
+    # Pad filename to 12 characters
+    byte_array.extend(bytes(filename.rjust(12, '0'), 'utf-8'))
+    # Add file size as 4 bytes (little endian)
+    byte_array.extend(len(data).to_bytes(4, 'little'))
+    # Add the actual image data
+    byte_array.extend(data)
+    
+    height, width, channels = img.shape
+    data_size = len(byte_array)
+    byte_num = 0
+    nib_num = 0
+    
+    for i in range(0, height):
+        for j in range(0, width):
+            for c in range(0, channels):
+                # Clear last 2 bits and insert 2 bits from data
+                img[i, j, c] = img[i, j, c] & 0xFC | (byte_array[byte_num] >> nib_num * 2) & 0x03
+                nib_num += 1
+                nib_num %= 4
+                if nib_num == 0:
+                    byte_num += 1
+                    if byte_num >= data_size:
+                        return img
+    return img
+
+
+def extract_image_data(img):
+    """
+    Extracts hidden image data from a stego image.
+    Returns: (image_data_bytes, original_filename)
+    """
+    filename_byte_array = bytearray()
+    filesize_byte_array = bytearray()
+    byte_array = bytearray()
+    height, width, channels = img.shape
+    data_size = 16
+    byte = 0
+    nib = 0
+    byte_dat = 0
+    
+    for i in range(0, height):
+        for j in range(0, width):
+            for c in range(0, channels):
+                # Extract 2 bits from pixel
+                byte_dat = byte_dat | (img[i, j, c] & 0x03) << nib * 2
+                nib += 1
+                nib %= 4
+                if nib == 0:
+                    if byte < 12:
+                        filename_byte_array.append(byte_dat)
+                    elif byte < 16:
+                        filesize_byte_array.append(byte_dat)
+                        if byte == 15:
+                            # Calculate data size from little endian bytes
+                            data_size = int.from_bytes(filesize_byte_array, 'little') + 16
+                    else:
+                        byte_array.append(byte_dat)
+                    byte_dat = 0
+                    byte += 1
+                if byte >= data_size:
+                    # Decode filename
+                    filename = filename_byte_array.decode().replace('0', '', filename_byte_array.decode().count('0') - filename_byte_array.decode()[::-1].find('0') + 1)
+                    filename = filename.lstrip('0')  # Remove leading zeros
+                    return bytes(byte_array), filename
+    
+    return None, None
+
+
 # Configure logging and Flask App
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("StegoApp")
@@ -93,7 +173,7 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["SECRET_KEY"] = os.urandom(24)
 
 # ===============================================
-# 2. Load PyTorch Detection Model from .pth file
+# 3. Load PyTorch Detection Model from .pth file
 # ===============================================
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 MODEL_PATH = os.path.join(APP_ROOT, "best_srnet_from_scratch_changed.pth")
@@ -147,7 +227,125 @@ def extract_page():
     return render_template("extract.html")
 
 
-# === API Routes ===
+# ===============================================
+# NEW: Image-in-Image Steganography Routes
+# ===============================================
+@app.route("/image-stego")
+def image_stego_page():
+    """Page for image-in-image steganography"""
+    return render_template("image_stego.html")
+
+
+@app.route("/embed_image", methods=["POST"])
+def embed_image():
+    """
+    API endpoint to embed a secret image inside a cover image.
+    Expects: 'cover' and 'secret' image files
+    Returns: Base64 encoded stego image
+    """
+    try:
+        if 'cover' not in request.files or 'secret' not in request.files:
+            return jsonify({'success': False, 'error': 'Both cover and secret images are required'}), 400
+        
+        cover_file = request.files['cover']
+        secret_file = request.files['secret']
+        
+        if cover_file.filename == '' or secret_file.filename == '':
+            return jsonify({'success': False, 'error': 'Both images must be selected'}), 400
+        
+        # Check filename length (max 12 characters including extension)
+        if len(secret_file.filename) > 12:
+            return jsonify({'success': False, 'error': 'Secret image filename must be 12 characters or less (including extension)'}), 400
+        
+        # Load cover image
+        cover_img = Image.open(cover_file).convert('RGB')
+        cover_array = np.array(cover_img)
+        
+        # Calculate maximum capacity (2 bits per pixel channel)
+        max_bytes = math.floor(cover_array.shape[0] * cover_array.shape[1] * 3 * 2 / 8)
+        
+        # Load secret image and convert to PNG bytes
+        secret_img = Image.open(secret_file)
+        secret_bytes_io = io.BytesIO()
+        secret_img.save(secret_bytes_io, format='PNG')
+        secret_data = secret_bytes_io.getvalue()
+        
+        # Check if secret image fits in cover image
+        if len(secret_data) > max_bytes - 16:
+            return jsonify({
+                'success': False,
+                'error': f'Secret image is too large! Maximum size: {(max_bytes - 16) // 1024}KB, Your image: {len(secret_data) // 1024}KB'
+            }), 400
+        
+        # Embed secret image into cover image
+        stego_array = write_image_data(cover_array, secret_data, secret_file.filename)
+        
+        # Convert back to PIL Image
+        stego_img = Image.fromarray(stego_array)
+        
+        # Convert to base64 for response
+        output = io.BytesIO()
+        stego_img.save(output, format='PNG')
+        output.seek(0)
+        img_base64 = base64.b64encode(output.getvalue()).decode()
+        
+        logger.info(f"Successfully embedded '{secret_file.filename}' into cover image")
+        
+        return jsonify({
+            'success': True,
+            'image': img_base64,
+            'message': f'Successfully embedded {len(secret_data) // 1024}KB secret image'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error during image embedding: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route("/extract_image", methods=["POST"])
+def extract_image():
+    """
+    API endpoint to extract a hidden image from a stego image.
+    Expects: 'stego' image file
+    Returns: Base64 encoded extracted image and original filename
+    """
+    try:
+        if 'stego' not in request.files:
+            return jsonify({'success': False, 'error': 'Stego image is required'}), 400
+        
+        stego_file = request.files['stego']
+        
+        if stego_file.filename == '':
+            return jsonify({'success': False, 'error': 'No file selected'}), 400
+        
+        # Load stego image
+        stego_img = Image.open(stego_file).convert('RGB')
+        stego_array = np.array(stego_img)
+        
+        # Extract hidden data
+        extracted_data, original_filename = extract_image_data(stego_array)
+        
+        if extracted_data is None:
+            return jsonify({'success': False, 'error': 'Failed to extract data from image. This may not be a valid stego image.'}), 400
+        
+        # Convert extracted data to base64
+        img_base64 = base64.b64encode(extracted_data).decode()
+        
+        logger.info(f"Successfully extracted '{original_filename}' from stego image")
+        
+        return jsonify({
+            'success': True,
+            'image': img_base64,
+            'filename': original_filename,
+            'message': f'Successfully extracted {len(extracted_data) // 1024}KB image'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error during image extraction: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# === Existing API Routes (UNCHANGED) ===
 @app.route("/perform_embed", methods=["POST"])
 def perform_embed():
     if (

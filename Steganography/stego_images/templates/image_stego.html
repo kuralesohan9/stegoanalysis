@@ -1,0 +1,590 @@
+{% extends "layout.html" %}
+{% block title %}Image-in-Image Steganography - Advanced Steganography Toolkit{% endblock %}
+{% block content %}
+<style>
+  .hero-section {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: linear-gradient(
+        135deg,
+        rgba(44, 47, 56, 0.8),
+        rgba(26, 27, 31, 0.9)
+      ),
+      url("{{ url_for('static', filename='images/hero-bg.jpg') }}");
+    background-size: cover;
+    background-position: center;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+  }
+  .hero-section h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #fff;
+  }
+  .hero-section p {
+    font-size: 1.1rem;
+    max-width: 700px;
+    margin: 0 auto;
+    color: #b0b8c4;
+  }
+
+  .info-box {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(124, 58, 237, 0.1));
+    border-left: 4px solid #a855f7;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border-radius: 8px;
+    color: #b0b8c4;
+  }
+  .info-box h4 {
+    color: #a855f7;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+  }
+  .info-box ul {
+    margin-left: 1.5rem;
+    line-height: 1.8;
+  }
+  .info-box li {
+    margin-bottom: 0.5rem;
+  }
+
+  .mode-selector {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+  .mode-btn {
+    padding: 1rem 2rem;
+    border: 2px solid #444;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #2c2f38;
+    color: #b0b8c4;
+  }
+  .mode-btn.active {
+    background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
+    color: white;
+    border-color: #a855f7;
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(168, 85, 247, 0.3);
+  }
+  .mode-btn:hover {
+    border-color: #a855f7;
+    transform: translateY(-2px);
+  }
+
+  .mode-content {
+    display: none;
+  }
+  .mode-content.active {
+    display: block;
+  }
+
+  .upload-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+  .upload-box {
+    border: 3px dashed #444;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    background: #2c2f38;
+    transition: all 0.3s ease;
+  }
+  .upload-box:hover {
+    background: #343844;
+    border-color: #a855f7;
+  }
+  .upload-box h3 {
+    color: #fff;
+    margin-bottom: 0.5rem;
+    font-size: 1.3rem;
+  }
+  .upload-box p {
+    color: #b0b8c4;
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+  }
+  .file-input {
+    display: none;
+  }
+  .upload-btn {
+    padding: 0.8rem 2rem;
+    background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .upload-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(168, 85, 247, 0.4);
+  }
+  .preview {
+    margin-top: 1.5rem;
+    display: none;
+  }
+  .preview img {
+    max-width: 100%;
+    border-radius: 10px;
+    margin-top: 1rem;
+    border: 2px solid #444;
+  }
+  .preview-info {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #b0b8c4;
+    line-height: 1.6;
+  }
+
+  .action-btn {
+    display: block;
+    margin: 2rem auto;
+    padding: 1.2rem 3rem;
+    background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 20px rgba(236, 72, 153, 0.3);
+  }
+  .action-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(236, 72, 153, 0.5);
+  }
+  .action-btn:disabled {
+    background: #444;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .result-section {
+    margin-top: 2.5rem;
+    padding: 2rem;
+    background: #2c2f38;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid #444;
+    display: none;
+  }
+  .result-section.show {
+    display: block;
+    animation: fadeIn 0.5s ease;
+  }
+  .result-section h3 {
+    color: #a855f7;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+  }
+  .result-section img {
+    max-width: 100%;
+    max-height: 500px;
+    border-radius: 10px;
+    margin: 1rem 0;
+    border: 2px solid #444;
+  }
+  .download-btn {
+    padding: 1rem 2.5rem;
+    background: #10b981;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 1rem;
+  }
+  .download-btn:hover {
+    background: #059669;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+  }
+
+  .message {
+    padding: 1rem 1.5rem;
+    margin: 1.5rem 0;
+    border-radius: 8px;
+    display: none;
+    font-weight: 500;
+  }
+  .message.show {
+    display: block;
+    animation: slideDown 0.3s ease;
+  }
+  .message.error {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+    border: 1px solid #ef4444;
+  }
+  .message.success {
+    background: rgba(34, 197, 94, 0.2);
+    color: #86efac;
+    border: 1px solid #22c55e;
+  }
+
+  .single-upload {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .loader {
+    display: none;
+    text-align: center;
+    margin: 2rem 0;
+  }
+  .loader.show {
+    display: block;
+  }
+  .spinner {
+    border: 4px solid #444;
+    border-top: 4px solid #a855f7;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+  }
+  .loader p {
+    margin-top: 1rem;
+    color: #a855f7;
+    font-weight: 600;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<div class="hero-section">
+  <h1>🖼️ Image-in-Image Steganography</h1>
+  <p>
+    Hide entire images within other images using advanced LSB (Least Significant Bit) 
+    steganography. The hidden image is virtually undetectable to the human eye.
+  </p>
+</div>
+
+<div class="info-box">
+  <h4>ℹ️ How It Works</h4>
+  <ul>
+    <li><strong>Encode:</strong> Embeds a complete image inside a cover image by modifying the least significant bits of each pixel</li>
+    <li><strong>Decode:</strong> Extracts the hidden image from a stego image with perfect reconstruction</li>
+    <li><strong>Limitation:</strong> Secret image filename must be 12 characters or less (including extension)</li>
+    <li><strong>Security:</strong> The cover image appears unchanged to human eyes, making detection extremely difficult</li>
+    <li><strong>Format:</strong> Supports PNG, JPG, and other common image formats</li>
+  </ul>
+</div>
+
+<div id="message" class="message"></div>
+
+<div class="mode-selector">
+  <button class="mode-btn active" onclick="switchMode('encode')">
+    <svg style="width: 20px; height: 20px; display: inline; vertical-align: middle; margin-right: 8px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+    </svg>
+    Encode (Hide Image)
+  </button>
+  <button class="mode-btn" onclick="switchMode('decode')">
+    <svg style="width: 20px; height: 20px; display: inline; vertical-align: middle; margin-right: 8px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z"/>
+    </svg>
+    Decode (Extract Image)
+  </button>
+</div>
+
+<!-- Encode Mode -->
+<div id="encode-mode" class="mode-content active">
+  <div class="upload-section">
+    <div class="upload-box">
+      <h3>1. Cover Image</h3>
+      <p>Upload the image that will contain the hidden data</p>
+      <input type="file" id="cover-input" class="file-input" accept="image/*" onchange="handleCoverUpload(event)">
+      <button class="upload-btn" onclick="document.getElementById('cover-input').click()">
+        📁 Choose Cover Image
+      </button>
+      <div id="cover-preview" class="preview"></div>
+    </div>
+    
+    <div class="upload-box">
+      <h3>2. Secret Image</h3>
+      <p>Upload the image to hide (filename ≤ 12 chars)</p>
+      <input type="file" id="secret-input" class="file-input" accept="image/*" onchange="handleSecretUpload(event)">
+      <button class="upload-btn" onclick="document.getElementById('secret-input').click()">
+        🔒 Choose Secret Image
+      </button>
+      <div id="secret-preview" class="preview"></div>
+    </div>
+  </div>
+  
+  <div class="loader" id="encode-loader">
+    <div class="spinner"></div>
+    <p>Encoding image... Please wait</p>
+  </div>
+  
+  <button class="action-btn" id="encode-btn" onclick="encodeImage()" disabled>
+    🚀 Encode Image
+  </button>
+  
+  <div id="encode-result" class="result-section">
+    <h3>✅ Stego Image Created Successfully</h3>
+    <p style="color: #b0b8c4; margin-bottom: 1rem;">Your secret image has been hidden inside the cover image</p>
+    <img id="stego-image" src="" alt="Stego Image">
+    <br>
+    <a id="download-stego" class="download-btn" download="stego_image.png">
+      ⬇️ Download Stego Image
+    </a>
+  </div>
+</div>
+
+<!-- Decode Mode -->
+<div id="decode-mode" class="mode-content">
+  <div class="single-upload">
+    <div class="upload-box">
+      <h3>Upload Stego Image</h3>
+      <p>Upload the image containing hidden data to extract the secret image</p>
+      <input type="file" id="stego-input" class="file-input" accept="image/*" onchange="handleStegoUpload(event)">
+      <button class="upload-btn" onclick="document.getElementById('stego-input').click()">
+        📁 Choose Stego Image
+      </button>
+      <div id="stego-preview" class="preview"></div>
+    </div>
+  </div>
+  
+  <div class="loader" id="decode-loader">
+    <div class="spinner"></div>
+    <p>Decoding image... Please wait</p>
+  </div>
+  
+  <button class="action-btn" id="decode-btn" onclick="decodeImage()" disabled style="margin-top: 2rem;">
+    🔓 Decode Image
+  </button>
+  
+  <div id="decode-result" class="result-section">
+    <h3>✅ Secret Image Extracted Successfully</h3>
+    <img id="extracted-image" src="" alt="Extracted Image">
+    <p id="extracted-filename" style="margin: 1rem 0; color: #b0b8c4; font-weight: 600;"></p>
+    <a id="download-extracted" class="download-btn">
+      ⬇️ Download Extracted Image
+    </a>
+  </div>
+</div>
+
+<script>
+  let coverFile = null;
+  let secretFile = null;
+  let stegoFile = null;
+
+  function switchMode(mode) {
+    document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.mode-content').forEach(content => content.classList.remove('active'));
+    
+    if (mode === 'encode') {
+      document.querySelector('.mode-btn:first-child').classList.add('active');
+      document.getElementById('encode-mode').classList.add('active');
+    } else {
+      document.querySelector('.mode-btn:last-child').classList.add('active');
+      document.getElementById('decode-mode').classList.add('active');
+    }
+    
+    hideMessage();
+    document.getElementById('encode-result').classList.remove('show');
+    document.getElementById('decode-result').classList.remove('show');
+  }
+
+  function showMessage(text, type) {
+    const msg = document.getElementById('message');
+    msg.textContent = text;
+    msg.className = 'message show ' + type;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function hideMessage() {
+    document.getElementById('message').className = 'message';
+  }
+
+  function handleCoverUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    coverFile = file;
+    const preview = document.getElementById('cover-preview');
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        preview.innerHTML = `
+          <img src="${e.target.result}" alt="Cover Image">
+          <div class="preview-info">
+            <strong>Dimensions:</strong> ${img.width} × ${img.height} pixels<br>
+            <strong>Size:</strong> ${(file.size / 1024).toFixed(2)} KB
+          </div>
+        `;
+        preview.style.display = 'block';
+        checkEncodeReady();
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleSecretUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    if (file.name.length > 12) {
+      showMessage('❌ Error: Filename must be 12 characters or less (including extension)', 'error');
+      event.target.value = '';
+      return;
+    }
+    
+    secretFile = file;
+    const preview = document.getElementById('secret-preview');
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        preview.innerHTML = `
+          <img src="${e.target.result}" alt="Secret Image">
+          <div class="preview-info">
+            <strong>Dimensions:</strong> ${img.width} × ${img.height} pixels<br>
+            <strong>Size:</strong> ${(file.size / 1024).toFixed(2)} KB<br>
+            <strong>Filename:</strong> ${file.name}
+          </div>
+        `;
+        preview.style.display = 'block';
+        checkEncodeReady();
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleStegoUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    stegoFile = file;
+    const preview = document.getElementById('stego-preview');
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        preview.innerHTML = `
+          <img src="${e.target.result}" alt="Stego Image">
+          <div class="preview-info">
+            <strong>Dimensions:</strong> ${img.width} × ${img.height} pixels
+          </div>
+        `;
+        preview.style.display = 'block';
+        document.getElementById('decode-btn').disabled = false;
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function checkEncodeReady() {
+    document.getElementById('encode-btn').disabled = !(coverFile && secretFile);
+  }
+
+  async function encodeImage() {
+    hideMessage();
+    document.getElementById('encode-result').classList.remove('show');
+    document.getElementById('encode-loader').classList.add('show');
+    document.getElementById('encode-btn').disabled = true;
+    
+    const formData = new FormData();
+    formData.append('cover', coverFile);
+    formData.append('secret', secretFile);
+    
+    try {
+      const response = await fetch('/embed_image', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        document.getElementById('stego-image').src = 'data:image/png;base64,' + result.image;
+        document.getElementById('download-stego').href = 'data:image/png;base64,' + result.image;
+        document.getElementById('encode-result').classList.add('show');
+        showMessage('✅ Success: ' + result.message, 'success');
+      } else {
+        showMessage('❌ Error: ' + result.error, 'error');
+      }
+    } catch (error) {
+      showMessage('❌ Error: ' + error.message, 'error');
+    } finally {
+      document.getElementById('encode-loader').classList.remove('show');
+      checkEncodeReady();
+    }
+  }
+
+  async function decodeImage() {
+    hideMessage();
+    document.getElementById('decode-result').classList.remove('show');
+    document.getElementById('decode-loader').classList.add('show');
+    document.getElementById('decode-btn').disabled = true;
+    
+    const formData = new FormData();
+    formData.append('stego', stegoFile);
+    
+    try {
+      const response = await fetch('/extract_image', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        document.getElementById('extracted-image').src = 'data:image/png;base64,' + result.image;
+        document.getElementById('extracted-filename').textContent = '📄 Original filename: ' + result.filename;
+        document.getElementById('download-extracted').href = 'data:image/png;base64,' + result.image;
+        document.getElementById('download-extracted').download = result.filename;
+        document.getElementById('decode-result').classList.add('show');
+        showMessage('✅ Success: ' + result.message, 'success');
+      } else {
+        showMessage('❌ Error: ' + result.error, 'error');
+      }
+    } catch (error) {
+      showMessage('❌ Error: ' + error.message, 'error');
+    } finally {
+      document.getElementById('decode-loader').classList.remove('show');
+      document.getElementById('decode-btn').disabled = false;
+    }
+  }
+</script>
+
+{% endblock %}
